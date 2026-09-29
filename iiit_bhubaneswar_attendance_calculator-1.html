@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IIIT Bhubaneswar Attendance Calculator</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --accent: #38bdf8;
+      --danger: #f87171;
+      --success: #4ade80;
+      --border: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 880px;
+      width: 100%;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .val-display {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: white;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: #334155;
+      outline: none;
+      margin-top: 6px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    th {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+
+    .missed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .missed-control input[type="number"] {
+      width: 60px;
+      text-align: center;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: inline-block;
+      text-align: center;
+      min-width: 110px;
+    }
+
+    .badge-success { background: rgba(74, 222, 128, 0.2); color: var(--success); }
+    .badge-danger { background: rgba(248, 113, 113, 0.2); color: var(--danger); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📚 IIIT Bhubaneswar Bunk Calculator</h1>
+
+  <div class="card">
+    <h2>Configuration Settings</h2>
+    <div class="grid">
+      <div class="control-group">
+        <label for="section">Select Section</label>
+        <select id="section" onchange="loadSectionData()">
+          <option value="csea">1st BT CSE - Section A</option>
+          <option value="cseb">1st BT CSE - Section B</option>
+          <option value="csec">1st BT CSE - Section C</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Total Semester Weeks <span class="val-display" id="weeksVal">15</span></label>
+        <input type="range" id="weeks" min="1" max="20" value="15" oninput="calculate()">
+      </div>
+      <div class="control-group">
+        <label>Target Attendance <span class="val-display" id="targetVal">75%</span></label>
+        <input type="range" id="target" min="50" max="100" value="75" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Course-Wise Attendance Breakdown</h2>
+    <table id="courseTable">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Course Name</th>
+          <th style="width: 12%;">Classes/Wk</th>
+          <th style="width: 12%;">Total Held</th>
+          <th style="width: 33%;">Missed So Far</th>
+          <th style="width: 18%;">Bunks Remaining</th>
+        </tr>
+      </thead>
+      <tbody id="courseRows"></tbody>
+    </table>
+    <button class="btn" onclick="addCourse()">+ Add Custom Course / Elective</button>
+  </div>
+</div>
+
+<script>
+  const sectionSchedules = {
+    csea: [
+      { name: "Math-I", weekly: 3, missed: 0 },
+      { name: "BEE (Theory)", weekly: 2, missed: 0 },
+      { name: "Intro Prog (Theory)", weekly: 3, missed: 0 },
+      { name: "Engg Phy (Theory)", weekly: 3, missed: 0 },
+      { name: "CSI (Theory)", weekly: 1, missed: 0 },
+      { name: "CSI Lab", weekly: 1, missed: 0 },
+      { name: "Engg Phy Lab", weekly: 1, missed: 0 },
+      { name: "BEE Lab", weekly: 1, missed: 0 },
+      { name: "Intro Prog Lab", weekly: 1, missed: 0 },
+      { name: "Workshop Prac", weekly: 1, missed: 0 }
+    ],
+    cseb: [
+      { name: "Math-I", weekly: 2, missed: 0 },
+      { name: "BEE (Theory)", weekly: 2, missed: 0 },
+      { name: "Intro Prog (Theory)", weekly: 3, missed: 0 },
+      { name: "Engg Phy (Theory)", weekly: 3, missed: 0 },
+      { name: "CSI (Theory)", weekly: 1, missed: 0 },
+      { name: "CSI Lab", weekly: 1, missed: 0 },
+      { name: "Engg Phy Lab", weekly: 1, missed: 0 },
+      { name: "BEE Lab", weekly: 1, missed: 0 },
+      { name: "Intro Prog Lab", weekly: 1, missed: 0 },
+      { name: "Workshop Prac", weekly: 1, missed: 0 }
+    ],
+    csec: [
+      { name: "Math-I", weekly: 2, missed: 0 },
+      { name: "BEE (Theory)", weekly: 3, missed: 0 },
+      { name: "Intro Prog (Theory)", weekly: 3, missed: 0 },
+      { name: "Engg Phy (Theory)", weekly: 2, missed: 0 },
+      { name: "CSI (Theory)", weekly: 1, missed: 0 },
+      { name: "CSI Lab", weekly: 1, missed: 0 },
+      { name: "Engg Phy Lab", weekly: 1, missed: 0 },
+      { name: "BEE Lab", weekly: 1, missed: 0 },
+      { name: "Intro Prog Lab", weekly: 1, missed: 0 },
+      { name: "Workshop Prac", weekly: 1, missed: 0 }
+    ]
+  };
+
+  let activeCourses = [];
+
+  function loadSectionData() {
+    const selectedSection = document.getElementById('section').value;
+    activeCourses = JSON.parse(JSON.stringify(sectionSchedules[selectedSection]));
+    calculate();
+  }
+
+  function calculate() {
+    const weeks = parseFloat(document.getElementById('weeks').value) || 15;
+    const target = parseFloat(document.getElementById('target').value) || 75;
+
+    document.getElementById('weeksVal').innerText = weeks;
+    document.getElementById('targetVal').innerText = target + '%';
+
+    const tbody = document.getElementById('courseRows');
+    tbody.innerHTML = '';
+
+    activeCourses.forEach((course, index) => {
+      const totalClasses = course.weekly * weeks;
+      const minRequired = Math.ceil((target / 100) * totalClasses);
+      const maxAllowedTotalAbsences = totalClasses - minRequired;
+      const bunksRemaining = maxAllowedTotalAbsences - course.missed;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${course.name}" onchange="updateName(${index}, this.value)"></td>
+        <td><b>${course.weekly}</b></td>
+        <td>${totalClasses}</td>
+        <td>
+          <div class="missed-control">
+            <input type="number" min="0" max="${totalClasses}" value="${course.missed}" oninput="updateMissed(${index}, this.value)">
+            <input type="range" min="0" max="${totalClasses}" value="${course.missed}" oninput="updateMissed(${index}, this.value)">
+          </div>
+        </td>
+        <td>
+          <span class="badge ${bunksRemaining >= 0 ? 'badge-success' : 'badge-danger'}">
+            ${bunksRemaining >= 0 ? bunksRemaining + ' left' : 'Short by ' + Math.abs(bunksRemaining)}
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateName(i, val) {
+    activeCourses[i].name = val;
+  }
+
+  function updateMissed(i, val) {
+    activeCourses[i].missed = Math.max(0, parseFloat(val) || 0);
+    calculate();
+  }
+
+  function addCourse() {
+    activeCourses.push({ name: "New Course", weekly: 3, missed: 0 });
+    calculate();
+  }
+
+  loadSectionData();
+</script>
+
+</body>
+</html>
